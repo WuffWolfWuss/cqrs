@@ -1,0 +1,22 @@
+{
+  "name": "long.nguyen",
+  "version": "1.0.0",
+  "description": "cqrs",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/start.ts",
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "long.nguyen",
+  "license": "ISC",
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "inversify": "^7.5.1",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  }
+}
