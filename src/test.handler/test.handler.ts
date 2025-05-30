@@ -1,4 +1,4 @@
-import { injectable } from "inversify";
+import { inject, injectable } from "inversify";
 import { CommandHandler } from "../decorators/command-handler";
 import { TestCommand } from "./test.command";
 
@@ -10,5 +10,7 @@ export class TestHandler {
   public async execute(command: TestCommand): Promise<any> {
     console.log("TestHandler executing...");
     console.log(`Command values: ${JSON.stringify(command)}`);
+
+    return { success: true };
   }
 }
