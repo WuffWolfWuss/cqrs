@@ -4,7 +4,9 @@ const TYPES = {
   EventBus: Symbol.for("EventBus"),
   Container: Symbol.for("Container"),
   KafkaBroker: Symbol.for("KafkaBroker"),
-  EventPublisher: Symbol.for("EventPublisher")
+  BrokerPublisher: Symbol.for("BrokerPublisher"),
+  EventPublisher: Symbol.for("EventPublisher"),
+  ObjectFactory: Symbol.for("ObjectFactory")
 };
 
 export { TYPES };
