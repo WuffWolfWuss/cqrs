@@ -18,7 +18,8 @@ function exploreServices(handler: ServiceType): SimpleCQRSType {
 async function main() {
   const { commandBus, eventBus } = exploreServices({ commands: [TestHandler], events: [TestEventHandler, TestEventHandler2] });
   const command = new TestCommand({ id: "1000" });
-  commandBus.execute<TestCommand>(command);
+  const cResult = await commandBus.execute<TestCommand>(command);
+  console.log("command result: ", cResult);
 
   const event = new TestEvent({ id: "2000", message: "sth.sth" });
   eventBus.publish(event);

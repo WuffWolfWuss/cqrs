@@ -14,7 +14,7 @@ export class KafkaBroker implements IKafkaBroker {
   constructor() {
     this.kafka = new Kafka({
       clientId: "my-cqrs-app",
-      brokers: ["localhost:9092"]
+      brokers: ["localhost:29092", "localhost:29093"]
     });
     this.producer = this.kafka.producer();
   }
