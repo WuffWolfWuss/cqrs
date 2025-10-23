@@ -6,6 +6,7 @@ import { TYPES } from "./type";
 import { TestEvent } from "./test.handler/event";
 import { TestEventHandler } from "./test.handler/event.handler";
 import { TestEventHandler2 } from "./test.handler/event.handler2";
+import { EventHandlerService } from "./test.handler/event.consumer";
 
 function exploreServices(handler: ServiceType): SimpleCQRSType {
   if (!container.isBound(TYPES.CQRSModule)) {
@@ -17,6 +18,10 @@ function exploreServices(handler: ServiceType): SimpleCQRSType {
 
 async function main() {
   const { commandBus, eventBus } = exploreServices({ commands: [TestHandler], events: [TestEventHandler, TestEventHandler2] });
+  const eventHandler = container.get<EventHandlerService>(TYPES.EventHandlerService);
+  // Trigger handler registration
+  eventHandler.handleExactTopic(null, null as any);
+  
   const command = new TestCommand({ id: "1000" });
   const cResult = await commandBus.execute<TestCommand>(command);
   console.log("command result: ", cResult);

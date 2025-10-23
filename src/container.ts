@@ -9,6 +9,7 @@ import { KafkaBroker } from "./broker/kafka";
 import { BrokerPublisher } from "./broker";
 import { EventPublisher } from "./eventPub/event.publisher";
 import { ObjectFactory } from "./eventPub/object.factory";
+import { EventHandlerService } from "./test.handler/event.consumer";
 
 const container = new Container();
 
@@ -22,5 +23,6 @@ container.bind(TYPES.Container).toConstantValue(container);
 
 //TEST
 container.bind(TYPES.ObjectFactory).to(ObjectFactory);
+container.bind<EventHandlerService>(TYPES.EventHandlerService).to(EventHandlerService).inSingletonScope();
 
 export { container };

@@ -15,7 +15,7 @@ export class TestHandler {
     console.log(`Command values: ${JSON.stringify(command)}`);
 
     const obj = this.objectFactory.create({ id: command.id });
-    //obj.publish(new TestEvent({ id: "EV01", message: "EVENT SENDING" }));
+    obj.publish(new TestEvent({ id: "EV01", message: "EVENT SENDING" }));
 
     return { success: true };
   }

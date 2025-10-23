@@ -3,7 +3,9 @@ import { EventBus, IEvent } from "../event.bus";
 import { TYPES } from "../type";
 
 export abstract class AggregateRoot<EventBase extends IEvent = IEvent> {
-  publish<T extends EventBase = EventBase>(event: T) {}
+  publish<T extends EventBase = EventBase>(event: T) {
+    // Empty method of abstract class
+  }
 }
 
 @injectable()

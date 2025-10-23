@@ -10,7 +10,6 @@ export class TestEventHandler2 implements IEventHandler<TestEvent> {
 
   async handle(event: TestEvent) {
     console.log("TestEventHandler number 2 executing...");
-    console.log(`TestEventHandler number 2values: ${JSON.stringify(event)}`);
     return { success: true };
   }
 }

@@ -11,7 +11,6 @@ export class TestEventHandler implements IEventHandler<TestEvent> {
   public constructor(@inject(TYPES.BrokerPublisher) private readonly broker: IBrokerPublisher) {}
 
   async handle(event: TestEvent) {
-    console.log("TestEventHandler executing...");
     console.log(`TestEventHandler values: ${JSON.stringify(event)}`);
 
     // use event publisher to emit event cross services

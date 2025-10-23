@@ -23,7 +23,7 @@ export class CommandBusOLD<CommandBase extends ICommand = ICommand> extends Obse
 
   execute<T extends CommandBase, R = any>(command: T): Promise<R> {
     const handlerType = Reflect.getMetadata(COMMAND_HANDLER_METADATA, command);
-    const handler = container.get(handlerType) as ICommandHandler<T>;
+    const handler: ICommandHandler<T> = container.get(handlerType);
     if (!handler) {
       throw new Error("Command handler not found.");
     }
