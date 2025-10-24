@@ -1,7 +1,7 @@
 import "reflect-metadata";
 import { Container, inject, injectable } from "inversify";
 import { ObservableBus } from "./rxjs-util/observable-bus";
-import { container } from "./container";
+import { CQRSContainer } from "./container";
 import { COMMAND_HANDLER_METADATA } from "./decorators/constants";
 import { TYPES } from "./type";
 import { Type } from "./interface";
@@ -23,7 +23,7 @@ export class CommandBusOLD<CommandBase extends ICommand = ICommand> extends Obse
 
   execute<T extends CommandBase, R = any>(command: T): Promise<R> {
     const handlerType = Reflect.getMetadata(COMMAND_HANDLER_METADATA, command);
-    const handler: ICommandHandler<T> = container.get(handlerType);
+    const handler: ICommandHandler<T> = CQRSContainer.get(handlerType);
     if (!handler) {
       throw new Error("Command handler not found.");
     }
@@ -32,7 +32,7 @@ export class CommandBusOLD<CommandBase extends ICommand = ICommand> extends Obse
   }
 
   register(handlers: any[] = []) {
-    handlers.forEach((handler) => container.bind(handler).toSelf());
+    handlers.forEach((handler) => CQRSContainer.bind(handler).toSelf());
   }
 }
 

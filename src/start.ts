@@ -1,4 +1,4 @@
-import { container } from "./container";
+import { CQRSContainer } from "./container";
 import { ICQRSModule, ServiceType, SimpleCQRSType } from "./cqrs.module";
 import { TestHandler } from "./test.handler/test.handler";
 import { TestCommand } from "./test.handler/test.command";
@@ -7,21 +7,23 @@ import { TestEvent } from "./test.handler/event";
 import { TestEventHandler } from "./test.handler/event.handler";
 import { TestEventHandler2 } from "./test.handler/event.handler2";
 import { EventHandlerService } from "./test.handler/event.consumer";
+import { MessageHandlerService } from "./test.handler/message.consumer";
 
 function exploreServices(handler: ServiceType): SimpleCQRSType {
-  if (!container.isBound(TYPES.CQRSModule)) {
-    throw new Error("CQRSModule is not bound in the container");
+  if (!CQRSContainer.isBound(TYPES.CQRSModule)) {
+    throw new Error("CQRSModule is not bound in the CQRSContainer");
   }
-  const cqrs = container.get<ICQRSModule>(TYPES.CQRSModule);
+  const cqrs = CQRSContainer.get<ICQRSModule>(TYPES.CQRSModule);
   return cqrs.explore(handler);
 }
 
 async function main() {
   const { commandBus, eventBus } = exploreServices({ commands: [TestHandler], events: [TestEventHandler, TestEventHandler2] });
-  const eventHandler = container.get<EventHandlerService>(TYPES.EventHandlerService);
+  const eventHandler = CQRSContainer.get<EventHandlerService>(TYPES.EventHandlerService);
+  const messageHandler = new MessageHandlerService()
   // Trigger handler registration
-  eventHandler.handleExactTopic(null, null as any);
-  
+  await eventHandler.registerHandlers();
+
   const command = new TestCommand({ id: "1000" });
   const cResult = await commandBus.execute<TestCommand>(command);
   console.log("command result: ", cResult);

@@ -8,6 +8,7 @@ const TYPES = {
   EventPublisher: Symbol.for("EventPublisher"),
   ObjectFactory: Symbol.for("ObjectFactory"),
   EventHandlerService: Symbol.for("EventHandlerService"),
+  NatsBroker: Symbol.for("NatsBroker"),
 };
 
 export { TYPES };

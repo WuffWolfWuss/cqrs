@@ -1,5 +1,6 @@
 import { injectable } from "inversify";
 import { Consumer, EachMessagePayload, Kafka, Partitioners, Producer, ProducerRecord } from "kafkajs";
+import { HANDLER_METADATA_KEY } from "../constants";
 
 export interface IKafkaBroker {
   send(topic: string, messages: { key?: string; value: string }[]): Promise<void>;
@@ -33,10 +34,9 @@ export class KafkaBroker implements IKafkaBroker {
   }
 
   private async initialize() {
-    if (this.initialized) return;
     try {
-      await this.producer.connect();
-      await this.consumer.connect();
+      !this.initialized && await this.producer.connect();
+      !this.initialized && await this.consumer.connect();
       this.initialized = true;
     } catch (error) {
       console.error('Failed to connect Kafka producer:', error);
@@ -100,20 +100,14 @@ export function BrokerEvent(topic: string) {
     propertyKey: string,
     descriptor: PropertyDescriptor,
   ) {
-    const originalMethod = descriptor.value;
-    descriptor.value = async function (...args: any[]) {
-      const broker = this.kafkaBroker as IKafkaBroker;
-      if (!broker) {
-        throw new Error('KafkaBroker not injected');
-      }
-      await broker.subscribe(topic, async (payload: EachMessagePayload) => {
-        // Parse message value (assuming JSON, adjust as needed)
-        const messageValue = payload.message.value
-          ? JSON.parse(payload.message.value.toString())
-          : null;
-        await originalMethod.call(this, messageValue, payload);
-      });
-    };
+    // Get existing handlers or initialize array
+    const handlers = Reflect.getMetadata(HANDLER_METADATA_KEY, target.constructor) || [];
+    // Store topic and method name
+    handlers.push({ topic, method: propertyKey });
+    Reflect.defineMetadata(HANDLER_METADATA_KEY, handlers, target.constructor);
+
+    // Keep original method unchanged
+    return descriptor;
   };
 }
 
