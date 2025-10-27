@@ -1,9 +1,9 @@
 import { inject, injectable } from "inversify";
-import { EventHandler } from "../decorators/event-handler";
+import { EventHandler } from "../../decorators/event-handler";
 import { TestEvent } from "./event";
-import { IEventHandler } from "../event.bus";
-import { IBrokerPublisher } from "../broker";
-import { TYPES } from "../type";
+import { IEventHandler } from "../../event.bus";
+import { IBrokerPublisher } from "../../broker";
+import { TYPES } from "../../type";
 
 @injectable()
 @EventHandler(TestEvent)
@@ -14,11 +14,9 @@ export class TestEventHandler implements IEventHandler<TestEvent> {
     console.log(`TestEventHandler values: ${JSON.stringify(event)}`);
 
     // use event publisher to emit event cross services
-    const result = await this.broker.send({
+    await this.broker.publish({
       topic: TestEvent.eventName,
       payload: event
     });
-    console.log("TestEventHandler return result", result)
-    return { success: true };
   }
 }

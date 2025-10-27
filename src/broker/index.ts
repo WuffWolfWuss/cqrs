@@ -5,6 +5,7 @@ import { TYPES } from "../type";
 export interface IBrokerPublisher {
   publish: (event: { topic: string; payload: any }) => Promise<void>;
   send: (msg: { topic: string; payload: any }) => Promise<void>;
+  shutdown: () => Promise<void>;
 }
 
 @injectable()
@@ -22,6 +23,14 @@ export class BrokerPublisher implements IBrokerPublisher {
   public async send(msg: { topic: string; payload: any }): Promise<void> {
     console.log("MessagePublisher publish: " + JSON.stringify(msg));
     return this.nats.send(msg.topic, msg.payload);
+  }
+
+  public async shutdown() {
+    console.log("BrokerPublisher shutting down...");
+    await this.kafkaBroker.disconnect();
+    console.log("Kafka disconnect...");
+    await this.nats.disconnect();
+    console.log("Nats disconnect...");
   }
 }
 

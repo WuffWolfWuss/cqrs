@@ -1,7 +1,7 @@
 import { injectable } from "inversify";
-import { EventHandler } from "../decorators/event-handler";
+import { EventHandler } from "../../decorators/event-handler";
 import { TestEvent } from "./event";
-import { IEventHandler } from "../event.bus";
+import { IEventHandler } from "../../event.bus";
 
 @injectable()
 @EventHandler(TestEvent)

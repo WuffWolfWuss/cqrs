@@ -1,14 +1,18 @@
 import { inject, injectable } from "inversify";
-import { CommandHandler } from "../decorators/command-handler";
+import { CommandHandler } from "../../decorators/command-handler";
 import { TestCommand } from "./test.command";
-import { TYPES } from "../type";
-import { ObjectFactory } from "../eventPub/object.factory";
-import { TestEvent } from "./event";
+import { TYPES } from "../../type";
+import { ObjectFactory } from "../../eventPub/object.factory";
+import { TestEvent } from "../events/event";
+import { IBrokerPublisher } from "../../broker";
 
 @injectable()
 @CommandHandler(TestCommand)
 export class TestHandler {
-  public constructor(@inject(TYPES.ObjectFactory) private readonly objectFactory: ObjectFactory) {}
+  public constructor(
+    @inject(TYPES.ObjectFactory) private readonly objectFactory: ObjectFactory,
+    @inject(TYPES.BrokerPublisher) private readonly broker: IBrokerPublisher
+  ) {}
 
   public async execute(command: TestCommand): Promise<any> {
     console.log("TestHandler executing...");

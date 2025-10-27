@@ -1,4 +1,4 @@
-import { IEvent } from "../event.bus";
+import { IEvent } from "../../event.bus";
 
 export class TestEvent implements IEvent {
   public static readonly eventName = "something.something";

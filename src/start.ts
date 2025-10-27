@@ -1,13 +1,15 @@
 import { CQRSContainer } from "./container";
 import { ICQRSModule, ServiceType, SimpleCQRSType } from "./cqrs.module";
-import { TestHandler } from "./test.handler/test.handler";
-import { TestCommand } from "./test.handler/test.command";
+import { TestHandler } from "./test.handler/command/test.handler";
+import { TestCommand } from "./test.handler/command/test.command";
 import { TYPES } from "./type";
-import { TestEvent } from "./test.handler/event";
-import { TestEventHandler } from "./test.handler/event.handler";
-import { TestEventHandler2 } from "./test.handler/event.handler2";
-import { EventHandlerService } from "./test.handler/event.consumer";
-import { MessageHandlerService } from "./test.handler/message.consumer";
+import { TestEvent } from "./test.handler/events/event";
+import { TestEventHandler } from "./test.handler/events/event.handler";
+import { TestEventHandler2 } from "./test.handler/events/event.handler2";
+import { MessageHandlerService } from "./test.handler/consumer/message.consumer";
+import { EventHandlerService } from "./test.handler/consumer/event.consumer";
+import { MessageCommand } from "./test.handler/command/message.command";
+import { MessageHandler } from "./test.handler/command/message.handler";
 
 function exploreServices(handler: ServiceType): SimpleCQRSType {
   if (!CQRSContainer.isBound(TYPES.CQRSModule)) {
@@ -18,7 +20,10 @@ function exploreServices(handler: ServiceType): SimpleCQRSType {
 }
 
 async function main() {
-  const { commandBus, eventBus } = exploreServices({ commands: [TestHandler], events: [TestEventHandler, TestEventHandler2] });
+  const { commandBus, eventBus } = exploreServices({ 
+    commands: [TestHandler, MessageHandler], 
+    events: [TestEventHandler, TestEventHandler2] 
+  });
   const eventHandler = CQRSContainer.get<EventHandlerService>(TYPES.EventHandlerService);
   const messageHandler = new MessageHandlerService()
   // Trigger handler registration
@@ -28,8 +33,22 @@ async function main() {
   const cResult = await commandBus.execute<TestCommand>(command);
   console.log("command result: ", cResult);
 
-  const event = new TestEvent({ id: "2000", message: "sth.sth" });
-  eventBus.publish(event);
+  const command2 = new MessageCommand({ msg: "Testing. Testing" });
+  const c2Result = await commandBus.execute<MessageCommand>(command2);
+  console.log("command result: ", c2Result);
+
+  // const event = new TestEvent({ id: "2000", message: "sth.sth" });
+  // eventBus.publish(event);
 }
 
-main().catch(console.error);
+process.on('SIGINT', async () => {
+  console.log('Received SIGINT. Shutting down gracefully...');
+  const broker = CQRSContainer.get<{ shutdown: () => Promise<void> }>(TYPES.BrokerPublisher);
+  await broker.shutdown();
+  process.exit(0);
+});
+
+main().catch((error) => {
+  console.error('Error in main:', error);
+  process.exit(1);
+});

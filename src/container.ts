@@ -10,7 +10,7 @@ import { BrokerPublisher } from "./broker";
 import { EventPublisher } from "./eventPub/event.publisher";
 import { ObjectFactory } from "./eventPub/object.factory";
 import { NatsBroker } from "./broker/nats";
-import { EventHandlerService } from "./test.handler/event.consumer";
+import { EventHandlerService } from "./test.handler/consumer/event.consumer";
 
 const container = new Container();
 export const CQRSContainer = container

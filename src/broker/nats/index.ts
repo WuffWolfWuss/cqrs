@@ -114,7 +114,6 @@ export function CreateBrokerMessage(container: Container) {
       target.constructor = newConstructor;
 
       const broker = container.get<INatsBroker>(TYPES.NatsBroker);
-      console.log(propertyKey)
       broker.subscribe(topic, async (data: any, msg: Msg) => {
         const response = await newConstructor.prototype[propertyKey](data, msg);
         return response;
