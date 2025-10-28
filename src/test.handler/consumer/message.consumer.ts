@@ -1,9 +1,6 @@
+import { BrokerMessage } from ".";
 import { TestEvent } from "../events/event";
 import { EachMessagePayload } from "kafkajs";
-import { CreateBrokerMessage } from "../../broker/nats";
-import { CQRSContainer } from "../../container";
-
-export const BrokerMessage = CreateBrokerMessage(CQRSContainer)
 
 export class MessageHandlerService {
 

@@ -1,6 +1,7 @@
 const TYPES = {
   CQRSModule: Symbol.for("CQRSModule"),
   CommandBus: Symbol.for("CommandBus"),
+  QueryBus: Symbol.for("QueryBus"),
   EventBus: Symbol.for("EventBus"),
   Container: Symbol.for("Container"),
   KafkaBroker: Symbol.for("KafkaBroker"),

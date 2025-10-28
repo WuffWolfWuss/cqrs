@@ -34,4 +34,5 @@ export class BrokerPublisher implements IBrokerPublisher {
   }
 }
 
-export { BrokerEvent, IKafkaBroker } from "./kafka";
+export { IKafkaBroker } from "./kafka";
+export { INatsBroker } from "./nats";

@@ -11,6 +11,7 @@ import { EventPublisher } from "./eventPub/event.publisher";
 import { ObjectFactory } from "./eventPub/object.factory";
 import { NatsBroker } from "./broker/nats";
 import { EventHandlerService } from "./test.handler/consumer/event.consumer";
+import { QueryBus } from "./query.bus";
 
 const container = new Container();
 export const CQRSContainer = container
@@ -21,12 +22,13 @@ container.bind(TYPES.NatsBroker).to(NatsBroker).inSingletonScope();
 container.bind(TYPES.BrokerPublisher).to(BrokerPublisher).inSingletonScope();
 container.bind(TYPES.CommandBus).to(CommandBus).inSingletonScope();
 container.bind(TYPES.EventBus).to(EventBus).inSingletonScope();
+container.bind(TYPES.QueryBus).to(QueryBus).inSingletonScope();
 container.bind(TYPES.EventPublisher).to(EventPublisher).inSingletonScope();
 container.bind(TYPES.Container).toConstantValue(container);
 
 //TEST
 container.bind(TYPES.ObjectFactory).to(ObjectFactory);
-container.bind(TYPES.EventHandlerService).to(EventHandlerService).inSingletonScope();
+// container.bind(TYPES.EventHandlerService).to(EventHandlerService).inSingletonScope();
 
 // container.bind(TYPES.EventHandlerService).toDynamicValue(() => {
 //   return require("./test.handler/event.consumer").EventHandlerService;

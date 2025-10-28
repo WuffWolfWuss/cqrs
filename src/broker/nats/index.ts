@@ -1,8 +1,6 @@
 import { Container, injectable } from "inversify";
 import { connect } from "@nats-io/transport-node";
 import { Msg, NatsConnection, StringCodec, Subscription } from "nats";
-import { NATS_HANDLER_METADATA_KEY } from "../constants";
-import { CQRSContainer } from "../../container";
 import { TYPES } from "../../type";
 
 export interface INatsBroker {

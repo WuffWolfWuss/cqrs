@@ -22,12 +22,11 @@ function exploreServices(handler: ServiceType): SimpleCQRSType {
 async function main() {
   const { commandBus, eventBus } = exploreServices({ 
     commands: [TestHandler, MessageHandler], 
-    events: [TestEventHandler, TestEventHandler2] 
+    events: [TestEventHandler, TestEventHandler2],
+    queries: []
   });
-  const eventHandler = CQRSContainer.get<EventHandlerService>(TYPES.EventHandlerService);
-  const messageHandler = new MessageHandlerService()
-  // Trigger handler registration
-  await eventHandler.registerHandlers();
+  const eventHandler = new EventHandlerService();
+  const messageHandler = new MessageHandlerService();
 
   const command = new TestCommand({ id: "1000" });
   const cResult = await commandBus.execute<TestCommand>(command);

@@ -1,6 +1,7 @@
-import { injectable } from "inversify";
+import { Container, injectable } from "inversify";
 import { Consumer, EachMessagePayload, Kafka, Partitioners, Producer, ProducerRecord } from "kafkajs";
 import { HANDLER_METADATA_KEY } from "../constants";
+import { TYPES } from "../../type";
 
 export interface IKafkaBroker {
   send(topic: string, messages: { key?: string; value: string }[]): Promise<void>;
@@ -15,6 +16,7 @@ export class KafkaBroker implements IKafkaBroker {
   private readonly consumer: Consumer;
   private readonly handlers: Map<string | RegExp, (payload: EachMessagePayload) => Promise<void>> = new Map();
   private initialized: boolean;
+  private consumerRunning: boolean = false;
 
   constructor() {
     this.kafka = new Kafka({
@@ -29,7 +31,15 @@ export class KafkaBroker implements IKafkaBroker {
       allowAutoTopicCreation: true,
       createPartitioner: Partitioners.LegacyPartitioner
     });
-    this.consumer = this.kafka.consumer({ groupId: "my-cqrs-app-group", allowAutoTopicCreation: true });
+    this.consumer = this.kafka.consumer({ 
+      groupId: "my-cqrs-app-group", 
+      allowAutoTopicCreation: true,
+      metadataMaxAge: 30000,
+      retry: {
+        initialRetryTime: 500,
+        retries: 3,
+      }, 
+    });
     this.initialized = false;
   }
 
@@ -64,25 +74,22 @@ export class KafkaBroker implements IKafkaBroker {
 
   async subscribe(topic: string, handler: (payload: EachMessagePayload) => Promise<void>): Promise<void> {
     await this.initialize();
+    const { topics } = await this.kafka.admin().fetchTopicMetadata({ topics: [topic] })
     try {
+      if (!topics.length) {
+        await this.producer.send({
+          topic,
+          messages: [{ key: null, value: JSON.stringify({ __init: true }) }],
+        });
+      }
+
       this.handlers.set(topic, handler);
+
       await this.consumer.subscribe({
         topics: [topic],
-        fromBeginning: true, // Adjust based on your CQRS needs (e.g., false for new events only)
+        fromBeginning: true,
       });
-      await this.consumer.run({
-        eachMessage: async (payload: EachMessagePayload) => {
-          for (const [topicPattern, handle] of this.handlers) {
-            const topicMatches =
-              typeof topicPattern === 'string'
-                ? topicPattern === payload.topic
-                : topicPattern.test(payload.topic);
-            if (topicMatches) {
-              await handle(payload);
-            }
-          }
-        },
-      });
+      await this.startConsumer();
     } catch (error) {
       console.error(`Error subscribing to topic ${topic}:`, error);
       throw error;
@@ -92,23 +99,55 @@ export class KafkaBroker implements IKafkaBroker {
   async disconnect(): Promise<void> {
     await this.producer.disconnect();
   }
+
+  private async startConsumer() {
+    if (this.consumerRunning) return;
+
+    await this.consumer.run({
+      eachMessage: async (payload) => {
+        for (const [topicPattern, handler] of this.handlers) {
+          const matches = typeof topicPattern === 'string'
+            ? topicPattern === payload.topic
+            : topicPattern.test(payload.topic);
+
+          if (matches) {
+            try {
+              await handler(payload);
+            } catch (err) {
+              console.error('Handler error:', err);
+            }
+          }
+        }
+      },
+    });
+
+    this.consumerRunning = true;
+  }
 }
 
-export function BrokerEvent(topic: string) {
-  return function (
-    target: any,
-    propertyKey: string,
-    descriptor: PropertyDescriptor,
-  ) {
-    // Get existing handlers or initialize array
-    const handlers = Reflect.getMetadata(HANDLER_METADATA_KEY, target.constructor) || [];
-    // Store topic and method name
-    handlers.push({ topic, method: propertyKey });
-    Reflect.defineMetadata(HANDLER_METADATA_KEY, handlers, target.constructor);
+export function CreateBrokerEvent(container: Container) {
+  return function BrokerEvent(topic: string) {
+    return function (
+      target: any,
+      propertyKey: string,
+      descriptor: PropertyDescriptor,
+    ) {
+      // Store instance in constructor
+      const originalConstructor = target.constructor;
 
-    // Keep original method unchanged
-    return descriptor;
-  };
+      const broker = container.get<IKafkaBroker>(TYPES.KafkaBroker);
+      broker.subscribe(topic, async (payload: EachMessagePayload) => {
+        const messageValue = payload.message.value
+          ? JSON.parse(payload.message.value.toString())
+          : null;
+        // Call the handler method
+        await originalConstructor.prototype[propertyKey](messageValue, payload);
+      });
+
+      // Keep original method unchanged
+      return descriptor;
+    };
+  }
 }
 
 
