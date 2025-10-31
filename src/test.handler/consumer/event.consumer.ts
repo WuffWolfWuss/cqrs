@@ -6,13 +6,7 @@ import { TYPES } from "../../type";
 
 @injectable()
 export class EventHandlerService {
-  constructor(
-    @inject(TYPES.BrokerPublisher) private readonly broker: IBrokerPublisher,
-  ) {}
-
-  async subscribe() {
-    await this.broker.subscribe(this);
-  }
+  constructor() {}
 
   @BrokerEvent(TestEvent.eventName)
   async handleExactTopic(message: any, payload: EachMessagePayload) {

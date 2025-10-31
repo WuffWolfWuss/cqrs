@@ -10,6 +10,7 @@ import { MessageHandlerService } from "./test.handler/consumer/message.consumer"
 import { EventHandlerService } from "./test.handler/consumer/event.consumer";
 import { MessageCommand } from "./test.handler/command/message.command";
 import { MessageHandler } from "./test.handler/command/message.handler";
+import { BrokerPublisher } from "./broker";
 
 function exploreServices(handler: ServiceType): SimpleCQRSType {
   if (!CQRSContainer.isBound(TYPES.CQRSModule)) {
@@ -25,8 +26,8 @@ async function main() {
     events: [TestEventHandler, TestEventHandler2],
     queries: []
   });
-  const eventBroker = CQRSContainer.get<EventHandlerService>(TYPES.EventHandlerService);
-  await eventBroker.subscribe();
+  const broker = CQRSContainer.get<BrokerPublisher>(TYPES.BrokerPublisher);
+  await broker.subscribe(new EventHandlerService());
 
   const messageBroker = CQRSContainer.get<MessageHandlerService>(TYPES.MessageHandlerService);
   await messageBroker.subscribe();
@@ -35,9 +36,9 @@ async function main() {
   // const cResult = await commandBus.execute<TestCommand>(command);
   // console.log("command result: ", cResult);
 
-  const command2 = new MessageCommand({ msg: "Testing. Testing" });
-  const c2Result = await commandBus.execute<MessageCommand>(command2);
-  console.log("command result: ", c2Result);
+  // const command2 = new MessageCommand({ msg: "Testing. Testing" });
+  // const c2Result = await commandBus.execute<MessageCommand>(command2);
+  // console.log("command result: ", c2Result);
 
   const event = new TestEvent({ id: "2000", message: "sth.sth" });
   eventBus.publish(event);
