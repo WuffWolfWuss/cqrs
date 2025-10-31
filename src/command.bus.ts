@@ -1,4 +1,3 @@
-import "reflect-metadata";
 import { Container, inject, injectable } from "inversify";
 import { ObservableBus } from "./rxjs-util/observable-bus";
 import { CQRSContainer } from "./container";

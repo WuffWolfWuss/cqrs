@@ -1,5 +1,4 @@
 name: cqr
-version: "1"
 services:
   kafka:
     image: apache/kafka:latest
@@ -24,6 +23,7 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_NUM_PARTITIONS: 3
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
 
   kafka-ui:
     image: kafbat/kafka-ui:main
@@ -43,3 +43,66 @@ services:
       - "8222:8222" # HTTP monitoring
       - "6222:6222" # Route connections (for clustering)
     command: -DV # Enables debug and trace logging (optional)
+
+  # -----------------------------------------------------------------
+  # 4. Kafka Connect + Debezium MongoDB connector
+  # -----------------------------------------------------------------
+  connect:
+    image: quay.io/debezium/connect:2.7
+    container_name: kafka-connect
+    ports:
+      - "8083:8083"
+    depends_on:
+      - kafka
+    environment:
+      BOOTSTRAP_SERVERS: kafka:9093
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: connect-configs
+      OFFSET_STORAGE_TOPIC: connect-offsets
+      STATUS_STORAGE_TOPIC: connect-statuses
+      # Enable the MongoDB connector (it ships with the image)
+      CONNECT_PLUGIN_PATH: /kafka/connect
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8083/"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  # -----------------------------------------------------------------
+  # 5. Connector registration (runs once after Connect is healthy)
+  # -----------------------------------------------------------------
+  register-connector:
+    image: curlimages/curl:8.9.1
+    depends_on:
+      connect:
+        condition: service_healthy
+    entrypoint: |
+      sh -c '
+        echo "Waiting a bit for Connect to settle..."
+        sleep 5
+        echo "Registering Debezium MongoDB connector..."
+        curl -X PUT http://connect:8083/connectors/inventory-connector/config \
+          -H "Content-Type: application/json" \
+          -d @- <<EOF
+        {
+          "connector.class": "io.debezium.connector.mongodb.MongoDbConnector",
+          "mongodb.hosts": "${MONGODB_HOSTS}",
+          "mongodb.name": "atlas",
+          "mongodb.user": "${MONGODB_USER}",
+          "mongodb.password": "${MONGODB_PASSWORD}",
+          "mongodb.authsource": "admin",
+          "database.include.list": "${MONGODB_DATABASE}",
+          "collection.include.list": "${MONGODB_COLLECTION}",
+          "topic.prefix": "atlas",
+          "tasks.max": "1",
+          "capture.mode": "change_streams_update_full_with_pre_image",
+          "tombstones.on.delete": "false",
+          "heartbeat.interval.ms": "5000"
+        }
+        EOF
+        echo "\nConnector registered. Check status with:"
+        echo "  curl http://localhost:8083/connectors/inventory-connector/status"
+      '
+    env_file:
+      - .env

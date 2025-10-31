@@ -1,7 +1,6 @@
-import "reflect-metadata";
 import { Container, inject, injectable } from "inversify";
 import { ObservableBus } from "./rxjs-util/observable-bus";
-import { COMMAND_HANDLER_METADATA } from "./decorators/constants";
+import { QUERIES_HANDLER_METADATA } from "./decorators/constants";
 import { TYPES } from "./type";
 import { Type } from "./interface";
 
@@ -35,7 +34,7 @@ export class QueryBus<QueryBase extends IQuery = IQuery> extends ObservableBus<Q
 
   register(handlerClasses: QueryHandlerType[] = []) {
     handlerClasses.forEach((handler) => {
-      const queryClass = Reflect.getMetadata(COMMAND_HANDLER_METADATA, handler);
+      const queryClass = Reflect.getMetadata(QUERIES_HANDLER_METADATA, handler);
       if (!queryClass) {
         throw new Error(`No query found for handler ${handler.name}`);
       }

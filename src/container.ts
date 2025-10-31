@@ -10,11 +10,11 @@ import { BrokerPublisher } from "./broker";
 import { EventPublisher } from "./eventPub/event.publisher";
 import { ObjectFactory } from "./eventPub/object.factory";
 import { NatsBroker } from "./broker/nats";
-import { EventHandlerService } from "./test.handler/consumer/event.consumer";
 import { QueryBus } from "./query.bus";
+import { EventHandlerService } from "./test.handler/consumer/event.consumer";
+import { MessageHandlerService } from "./test.handler/consumer/message.consumer";
 
 const container = new Container();
-export const CQRSContainer = container
 
 container.bind<ICQRSModule>(TYPES.CQRSModule).to(CQRSModule).inSingletonScope();
 container.bind(TYPES.KafkaBroker).to(KafkaBroker).inSingletonScope();
@@ -28,8 +28,11 @@ container.bind(TYPES.Container).toConstantValue(container);
 
 //TEST
 container.bind(TYPES.ObjectFactory).to(ObjectFactory);
-// container.bind(TYPES.EventHandlerService).to(EventHandlerService).inSingletonScope();
+container.bind(TYPES.EventHandlerService).to(EventHandlerService).inSingletonScope();
+container.bind(TYPES.MessageHandlerService).to(MessageHandlerService).inSingletonScope();
 
 // container.bind(TYPES.EventHandlerService).toDynamicValue(() => {
 //   return require("./test.handler/event.consumer").EventHandlerService;
 // }).inSingletonScope();
+
+export const CQRSContainer = container;

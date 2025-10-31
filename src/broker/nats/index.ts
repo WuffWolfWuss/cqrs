@@ -1,12 +1,14 @@
-import { Container, injectable } from "inversify";
-import { connect } from "@nats-io/transport-node";
-import { Msg, NatsConnection, StringCodec, Subscription } from "nats";
+import { injectable } from "inversify";
+import { connect, Msg, NatsConnection, Subscription } from "@nats-io/transport-node";
 import { TYPES } from "../../type";
+import { StringCodec } from "nats";
+import { NATS_HANDLER_METADATA_KEY, NatsSubscription } from "../constants";
 
 export interface INatsBroker {
   send(topic: string, messages: any): Promise<void>;
   subscribe(topic: string, handler: (data: any, msg: Msg) => Promise<any>): Promise<void>;
   disconnect(): Promise<void>;
+  setupNatsSubscriptions(instance: any): Promise<void>;
 }
 
 @injectable()
@@ -54,23 +56,24 @@ export class NatsBroker implements INatsBroker {
       }
 
       const sub = this.connection.subscribe(topic, {
-        callback: async (err, msg) => {
+        callback: (err, msg) => {
           if (err) {
             console.error(`Error in NATS subscription for ${topic}:`, err);
             return;
           }
           // Decode and parse message
           const data = msg.data ? JSON.parse(this.sc.decode(msg.data)) : null;
-          try {
-            const response = await handler(data, msg);
-            // Reply if there's a reply subject (request-response)
-            if (msg.reply) {
-              const responseData = this.sc.encode(JSON.stringify(response || {}));
-              msg.respond(responseData);
+          void (async () => {
+            try {
+              const response = await handler(data, msg);
+              if (msg.reply) {
+                const responseData = this.sc.encode(JSON.stringify(response ?? {}));
+                msg.respond(responseData);
+              }
+            } catch (error) {
+              console.error(`Error handling message for ${topic}:`, error);
             }
-          } catch (error) {
-            console.error(`Error handling message for ${topic}:`, error);
-          }
+          })();
         },
       });
       this.subscriptions.set(topic, sub);
@@ -81,6 +84,7 @@ export class NatsBroker implements INatsBroker {
   }
 
   async disconnect(): Promise<void> {
+    if (!this.connection) return; 
     try {
       // Unsubscribe all subscriptions
       for (const sub of this.subscriptions.values()) {
@@ -93,31 +97,45 @@ export class NatsBroker implements INatsBroker {
       throw error;
     }
   }
+
+  async setupNatsSubscriptions(instance: any) {
+    const ctor = instance.constructor;
+    const subscriptions: NatsSubscription[] = 
+      Reflect.getMetadata(NATS_HANDLER_METADATA_KEY, ctor) || [];
+  
+    for (const { topic, handler } of subscriptions) {
+      const method = instance[handler];
+      if (typeof method !== 'function') {
+        throw new Error(`Handler ${handler} is not a function on ${ctor.name}`);
+      }
+  
+      await this.subscribe(topic, async (data: any, msg: Msg) => {
+        try {
+          const response = await method.call(instance, data, msg);
+          // Auto-reply if reply subject exists
+          if (msg.reply && response !== undefined) {
+            const encoded = this.sc.encode(JSON.stringify(response));
+            msg.respond(encoded);
+          }
+        } catch (error) {
+          console.error(`Error in Kafka handler ${handler} for topic ${topic}:`, error);
+        }
+      });
+  };}
 }
 
-export function CreateBrokerMessage(container: Container) {
-  return function BrokerMessage(topic: string) {
-    return function (
-      target: any,
-      propertyKey: string,
-      descriptor: PropertyDescriptor,
-      ) {
-      // Store instance in constructor
-      const originalConstructor = target.constructor;
-      const newConstructor: any = function (...args: any[]) {
-        const instance = new originalConstructor(...args);
-        return instance;
-      };
-      newConstructor.prototype = originalConstructor.prototype;
-      target.constructor = newConstructor;
-
-      const broker = container.get<INatsBroker>(TYPES.NatsBroker);
-      broker.subscribe(topic, async (data: any, msg: Msg) => {
-        const response = await newConstructor.prototype[propertyKey](data, msg);
-        return response;
-      });
-
+export function BrokerMessage(topic: string) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor,
+    ) {
+      // Collect subscriptions on the class
+      const subscriptions: NatsSubscription[] = 
+      Reflect.getMetadata(NATS_HANDLER_METADATA_KEY, target.constructor) || [];
+      subscriptions.push({ topic, handler: propertyKey });
+      Reflect.defineMetadata(NATS_HANDLER_METADATA_KEY, subscriptions, target.constructor);
+      // Return original descriptor (no modification needed)
       return descriptor;
-    }
   }
 }

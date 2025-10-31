@@ -25,19 +25,22 @@ async function main() {
     events: [TestEventHandler, TestEventHandler2],
     queries: []
   });
-  const eventHandler = new EventHandlerService();
-  const messageHandler = new MessageHandlerService();
+  const eventBroker = CQRSContainer.get<EventHandlerService>(TYPES.EventHandlerService);
+  await eventBroker.subscribe();
 
-  const command = new TestCommand({ id: "1000" });
-  const cResult = await commandBus.execute<TestCommand>(command);
-  console.log("command result: ", cResult);
+  const messageBroker = CQRSContainer.get<MessageHandlerService>(TYPES.MessageHandlerService);
+  await messageBroker.subscribe();
+
+  // const command = new TestCommand({ id: "1000" });
+  // const cResult = await commandBus.execute<TestCommand>(command);
+  // console.log("command result: ", cResult);
 
   const command2 = new MessageCommand({ msg: "Testing. Testing" });
   const c2Result = await commandBus.execute<MessageCommand>(command2);
   console.log("command result: ", c2Result);
 
-  // const event = new TestEvent({ id: "2000", message: "sth.sth" });
-  // eventBus.publish(event);
+  const event = new TestEvent({ id: "2000", message: "sth.sth" });
+  eventBus.publish(event);
 }
 
 process.on('SIGINT', async () => {

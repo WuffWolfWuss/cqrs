@@ -9,6 +9,7 @@ const TYPES = {
   EventPublisher: Symbol.for("EventPublisher"),
   ObjectFactory: Symbol.for("ObjectFactory"),
   EventHandlerService: Symbol.for("EventHandlerService"),
+  MessageHandlerService: Symbol.for("MessageHandlerService"),
   NatsBroker: Symbol.for("NatsBroker"),
 };
 
