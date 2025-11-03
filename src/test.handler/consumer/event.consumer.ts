@@ -1,8 +1,7 @@
-import { inject, injectable } from "inversify";
+import { injectable } from "inversify";
 import { EachMessagePayload } from "kafkajs";
 import { TestEvent } from "../events/event";
-import { BrokerEvent, IBrokerPublisher } from "../../broker";
-import { TYPES } from "../../type";
+import { BrokerEvent } from "../../broker";
 
 @injectable()
 export class EventHandlerService {

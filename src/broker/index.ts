@@ -6,7 +6,7 @@ export interface IBrokerPublisher {
   publish: (event: { topic: string; payload: any }) => Promise<void>;
   send: (msg: { topic: string; payload: any }) => Promise<void>;
   shutdown: () => Promise<void>
-  subscribe: (instance: any) => Promise<void>;
+  subscribe: (instances: any[]) => Promise<void>;
 }
 
 @injectable()
@@ -26,9 +26,11 @@ export class BrokerPublisher implements IBrokerPublisher {
     return this.nats.send(msg.topic, msg.payload);
   }
 
-  public async subscribe(instance: any) {
-    await this.kafkaBroker.setupKafkaSubscriptions(instance)
-    await this.nats.setupNatsSubscriptions(instance)
+  public async subscribe(instances: any[]) {
+    for (const instance of instances) {
+      await this.kafkaBroker.setupKafkaSubscriptions(instance)
+      await this.nats.setupNatsSubscriptions(instance)
+    }
   }
 
   public async shutdown() {

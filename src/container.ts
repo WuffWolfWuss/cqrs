@@ -11,8 +11,6 @@ import { EventPublisher } from "./eventPub/event.publisher";
 import { ObjectFactory } from "./eventPub/object.factory";
 import { NatsBroker } from "./broker/nats";
 import { QueryBus } from "./query.bus";
-import { EventHandlerService } from "./test.handler/consumer/event.consumer";
-import { MessageHandlerService } from "./test.handler/consumer/message.consumer";
 
 const container = new Container();
 
@@ -28,8 +26,6 @@ container.bind(TYPES.Container).toConstantValue(container);
 
 //TEST
 container.bind(TYPES.ObjectFactory).to(ObjectFactory);
-container.bind(TYPES.EventHandlerService).to(EventHandlerService).inSingletonScope();
-container.bind(TYPES.MessageHandlerService).to(MessageHandlerService).inSingletonScope();
 
 // container.bind(TYPES.EventHandlerService).toDynamicValue(() => {
 //   return require("./test.handler/event.consumer").EventHandlerService;

@@ -103,6 +103,8 @@ export class KafkaBroker implements IKafkaBroker {
 
   async disconnect(): Promise<void> {
     await this.producer.disconnect();
+    this.initialized = false;
+    this.consumerRunning = false;
   }
 
   async setupKafkaSubscriptions(instance: any) {
@@ -141,7 +143,7 @@ export class KafkaBroker implements IKafkaBroker {
 
     payload.retries++;
     if (payload.retries > 3) {
-      console.log(`Maximum retry`);
+      console.error(`Maximum retry`);
       return;
     }
 

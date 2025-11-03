@@ -1,19 +1,11 @@
-import { inject, injectable } from "inversify";
-import { BrokerMessage, IBrokerPublisher } from "../../broker";
-import { TYPES } from "../../type";
+import { injectable } from "inversify";
+import { BrokerMessage } from "../../broker";
 import { TestEvent } from "../events/event";
 import { EachMessagePayload } from "kafkajs";
 
 @injectable()
 export class MessageHandlerService {
-
-  constructor(
-    @inject(TYPES.BrokerPublisher) private readonly broker: IBrokerPublisher,
-  ) {}
-
-  async subscribe() {
-    await this.broker.subscribe(this);
-  }
+  constructor() {}
 
   @BrokerMessage(TestEvent.eventName)
   async handleTopic(message: any, payload: EachMessagePayload) {

@@ -27,18 +27,15 @@ async function main() {
     queries: []
   });
   const broker = CQRSContainer.get<BrokerPublisher>(TYPES.BrokerPublisher);
-  await broker.subscribe(new EventHandlerService());
+  await broker.subscribe([new EventHandlerService(), new MessageHandlerService()]);
 
-  const messageBroker = CQRSContainer.get<MessageHandlerService>(TYPES.MessageHandlerService);
-  await messageBroker.subscribe();
+  const command = new TestCommand({ id: "1000" });
+  const cResult = await commandBus.execute<TestCommand>(command);
+  console.log("command result: ", cResult);
 
-  // const command = new TestCommand({ id: "1000" });
-  // const cResult = await commandBus.execute<TestCommand>(command);
-  // console.log("command result: ", cResult);
-
-  // const command2 = new MessageCommand({ msg: "Testing. Testing" });
-  // const c2Result = await commandBus.execute<MessageCommand>(command2);
-  // console.log("command result: ", c2Result);
+  const command2 = new MessageCommand({ msg: "Testing. Testing" });
+  const c2Result = await commandBus.execute<MessageCommand>(command2);
+  console.log("command result: ", c2Result);
 
   const event = new TestEvent({ id: "2000", message: "sth.sth" });
   eventBus.publish(event);
